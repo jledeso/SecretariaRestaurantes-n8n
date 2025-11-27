@@ -1,0 +1,503 @@
+{
+  "name": "Asistente Reservas Restaurante - AI Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# 🍽️ Asistente de Reservas para Restaurantes\n\n## Workflow 100% n8n con AI Agent\n\n**Funcionalidades:**\n- ✅ Consultar disponibilidad de mesas\n- ✅ Crear reservas con datos de contacto\n- ✅ Gestionar tronas y alzadores\n- ✅ Cancelar/modificar reservas\n- ✅ Notificaciones al personal\n\n**Requisitos:**\n- Supabase (tablas y funciones SQL)\n- OpenAI API Key\n- Telegram Bot (notificaciones)\n\n**Canales:**\n- n8n Web Chat integrado\n- WhatsApp Business\n- Telegram Bot",
+        "height": 420,
+        "width": 380,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [60, 60],
+      "id": "sticky-intro",
+      "name": "Introducción"
+    },
+    {
+      "parameters": {
+        "content": "## 📥 Entrada: Chat Trigger\n\nRecibe mensajes del Web Chat integrado de n8n.\n\nPara WhatsApp/Telegram, crear workflows separados que envíen datos a este workflow.",
+        "height": 180,
+        "width": 280,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [60, 500],
+      "id": "sticky-entrada",
+      "name": "Nota Entrada"
+    },
+    {
+      "parameters": {
+        "content": "## ⚙️ Configuración\n\nLee la configuración del restaurante desde Data Table.\n\n**Crear Data Table:**\n- Nombre: `config_restaurante`\n- Columnas: clave, valor, descripcion",
+        "height": 200,
+        "width": 280,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [360, 500],
+      "id": "sticky-config",
+      "name": "Nota Config"
+    },
+    {
+      "parameters": {
+        "content": "## 🤖 AI Agent\n\nCerebro del asistente.\n\nConectados:\n- OpenAI Chat Model (gpt-4o-mini)\n- Simple Memory (sesiones)\n- 6 Tools (Supabase + Telegram)",
+        "height": 200,
+        "width": 280,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [660, 500],
+      "id": "sticky-agent",
+      "name": "Nota Agent"
+    },
+    {
+      "parameters": {
+        "content": "## 🔧 Herramientas (Tools)\n\nConectadas al AI Agent:\n\n1. **Verificar Disponibilidad** - Supabase\n2. **Crear Reserva** - Supabase\n3. **Consultar Sillas** - Supabase\n4. **Buscar Reserva** - Supabase\n5. **Cancelar Reserva** - Supabase\n6. **Notificar Personal** - Telegram",
+        "height": 260,
+        "width": 400,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [960, 500],
+      "id": "sticky-tools",
+      "name": "Nota Tools"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "mode": "hostedChat",
+        "initialMessages": "¡Hola! 👋 Soy Marina, tu asistente de reservas de La Terraza Mediterránea.\n\n¿En qué puedo ayudarte hoy?\n\n• Hacer una reserva\n• Consultar disponibilidad\n• Cancelar o modificar reserva\n• Información del restaurante",
+        "options": {
+          "title": "🍽️ La Terraza Mediterránea",
+          "subtitle": "Asistente de reservas 24/7",
+          "inputPlaceholder": "Escribe tu mensaje aquí...",
+          "responseMode": "lastNode",
+          "showWelcomeScreen": false,
+          "allowFileUploads": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [120, 260],
+      "id": "chat-trigger",
+      "name": "Chat Trigger",
+      "webhookId": "reservas-restaurante-chat"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "mode": "id",
+          "value": "={{/* REEMPLAZAR CON ID DE TU DATA TABLE config_restaurante */}}"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1,
+      "position": [380, 260],
+      "id": "get-config",
+      "name": "Obtener Configuración"
+    },
+    {
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat-input",
+              "name": "chatInput",
+              "value": "={{ $('Chat Trigger').item.json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "session-id",
+              "name": "sessionId",
+              "value": "={{ $('Chat Trigger').item.json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "config-obj",
+              "name": "config",
+              "value": "={{ Object.fromEntries($input.all().map(row => [row.json.clave, row.json.valor])) }}",
+              "type": "object"
+            },
+            {
+              "id": "fecha-actual",
+              "name": "fecha_actual",
+              "value": "={{ $now.format('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "hora-actual",
+              "name": "hora_actual",
+              "value": "={{ $now.format('HH:mm') }}",
+              "type": "string"
+            },
+            {
+              "id": "dia-semana",
+              "name": "dia_semana",
+              "value": "={{ ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$now.weekday] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [600, 260],
+      "id": "preparar-contexto",
+      "name": "Preparar Contexto"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "# ROL\nEres {{ $json.config.nombre_agente || 'Marina' }}, la asistente virtual de reservas de {{ $json.config.nombre_restaurante || 'La Terraza Mediterránea' }}.\n\n# PERSONALIDAD\n- Amable, eficiente y servicial\n- Hablas de tú a los clientes\n- Transmites la esencia mediterránea y relajada del restaurante\n- Eres proactiva ofreciendo alternativas cuando no hay disponibilidad\n- Conoces perfectamente el restaurante, sus zonas y especialidades\n\n# INFORMACIÓN DEL RESTAURANTE\n- **Nombre**: {{ $json.config.nombre_restaurante || 'La Terraza Mediterránea' }}\n- **Dirección**: {{ $json.config.direccion || 'Paseo Marítimo 45, Valencia' }}\n- **Teléfono**: {{ $json.config.telefono || '96 123 45 67' }}\n- **Horario comidas**: {{ $json.config.horario_comidas || '13:00 a 16:00' }}\n- **Horario cenas**: {{ $json.config.horario_cenas || '20:00 a 23:30' }}\n- **Día de cierre**: {{ $json.config.dia_cierre || 'Lunes (excepto festivos)' }}\n- **Precio medio**: {{ $json.config.precio_medio || '35-45€ por persona' }}\n- **Menú del día**: {{ $json.config.menu_dia_precio || '18,90€' }} (L-V comidas)\n\n# ZONAS DISPONIBLES\n1. **Terraza** - Exterior con vistas al mar, sombrillas\n2. **Salón Interior** - Ambiente climatizado y acogedor\n3. **Barra** - Mesas altas, ideal para aperitivos\n4. **Salón Privado** - Eventos privados (8-20 personas)\n5. **Terraza Superior** - Mejores vistas panorámicas\n\n# SILLAS PARA NIÑOS\n- Tronas disponibles: {{ $json.config.total_tronas || '6' }}\n- Alzadores disponibles: {{ $json.config.total_alzadores || '4' }}\n- Máximo por reserva: {{ $json.config.max_sillas_reserva || '3' }}\n\n# REGLAS DE RESERVA\n- Antelación mínima: {{ $json.config.anticipacion_minima || '2' }} horas\n- Antelación máxima: {{ $json.config.anticipacion_maxima || '60' }} días\n- Duración estándar: {{ $json.config.duracion_reserva || '120' }} minutos\n- Tolerancia llegada: 15 minutos\n\n# FECHA Y HORA ACTUAL\n- Fecha: {{ $json.fecha_actual }}\n- Hora: {{ $json.hora_actual }}\n- Día: {{ $json.dia_semana }}\n\n# FLUJO DE CONVERSACIÓN\n\n## Para NUEVA RESERVA:\n1. Pregunta: ¿Para cuántas personas?\n2. Pregunta: ¿Qué día y a qué hora? (comida 13-16h o cena 20-23:30h)\n3. Pregunta: ¿Tienes preferencia de zona? (terraza, interior, privado...)\n4. Usa herramienta: verificar_disponibilidad_mesas\n5. Si hay disponibilidad:\n   - Muestra las opciones con zona, área, capacidad y características\n   - Pide nombre completo y teléfono de contacto\n   - Pregunta si necesitan trona o alzador para niños\n   - Confirma TODOS los datos antes de crear la reserva\n   - Usa herramienta: crear_reserva\n   - Proporciona el código de reserva (RES-XXXXX)\n   - Recuerda: dirección y hora de llegada\n6. Si NO hay disponibilidad:\n   - Ofrece alternativas: otra hora del mismo día, otra zona\n   - Sugiere días cercanos con disponibilidad\n\n## Para CONSULTA DE DISPONIBILIDAD:\n1. Pregunta los datos necesarios (personas, fecha, hora)\n2. Usa herramienta: verificar_disponibilidad_mesas\n3. Informa las opciones disponibles con detalles\n4. Ofrece hacer la reserva directamente si le interesa\n\n## Para SILLAS DE NIÑO:\n1. Pregunta para qué fecha necesita las sillas\n2. Usa herramienta: consultar_sillas_disponibles\n3. Informa la disponibilidad de tronas y alzadores\n4. Recuerda que se pueden reservar junto con la mesa (máx. 3 por reserva)\n\n## Para CANCELAR RESERVA:\n1. Pide el código de reserva (RES-XXXXX) o el teléfono\n2. Usa herramienta: buscar_reserva\n3. Confirma los datos de la reserva encontrada\n4. Pregunta si está seguro de cancelar\n5. Usa herramienta: cancelar_reserva\n6. Confirma la cancelación y ofrece reservar para otra ocasión\n\n## Para MODIFICAR RESERVA:\n1. Pide el código de reserva o teléfono\n2. Usa herramienta: buscar_reserva\n3. Pregunta qué desea cambiar\n4. Si es fecha/hora: verificar nueva disponibilidad\n5. Actualizar la reserva\n\n## Para CONSULTAS GENERALES:\nResponde usando la información proporcionada sobre:\n- Horarios de apertura y cierre\n- Ubicación y cómo llegar\n- Carta, especialidades (paellas, arroces, pescado)\n- Menú del día\n- Eventos privados y grupos\n- Formas de pago (efectivo, tarjeta, Bizum)\n- Parking cercano\n- Accesibilidad\n- Mascotas (permitidas en terraza)\n\n# FORMATO DE RESPUESTAS\n- Sé conciso pero informativo\n- Usa emojis con moderación (🍽️ 📅 ✅)\n- Para listas de mesas, formatea claramente\n- Siempre confirma la información importante\n\n# AL FINALIZAR UNA RESERVA\n1. Proporciona el código de confirmación\n2. Resume: fecha, hora, personas, mesa, sillas niño si aplica\n3. Recuerda: \"Te esperamos en {{ $json.config.nombre_restaurante || 'La Terraza Mediterránea' }}, {{ $json.config.direccion || 'Paseo Marítimo 45' }}\"\n4. Menciona la tolerancia de 15 minutos\n\n# SI NO SABES ALGO\nOfrece el teléfono {{ $json.config.telefono || '96 123 45 67' }} para consultas específicas.",
+          "maxIterations": 10,
+          "returnIntermediateSteps": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [860, 260],
+      "id": "ai-agent",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.7
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [720, 480],
+      "id": "openai-model",
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Preparar Contexto').item.json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [860, 480],
+      "id": "memory",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Verifica qué mesas están disponibles para una fecha, hora y número de personas específicos. Opcionalmente filtra por zona (Terraza, Interior, Privado, etc.). Devuelve lista de mesas con ID, zona, área, capacidad y características.",
+        "operation": "getAll",
+        "tableId": "mesas",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "activa=eq.true&capacidad=gte.{{ $fromAI('num_personas', 'Número de personas para la reserva', 'number') }}"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [1000, 480],
+      "id": "tool-disponibilidad",
+      "name": "verificar_disponibilidad_mesas"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Crea una nueva reserva en el restaurante. Requiere: fecha (YYYY-MM-DD), hora (HH:MM), nombre_cliente, telefono, num_personas, mesa_id. Opcionales: email, tronas (número), alzadores (número), notas. Devuelve el código de confirmación.",
+        "operation": "create",
+        "tableId": "reservas",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "fecha",
+              "fieldValue": "={{ $fromAI('fecha', 'Fecha de la reserva en formato YYYY-MM-DD', 'string') }}"
+            },
+            {
+              "fieldId": "hora",
+              "fieldValue": "={{ $fromAI('hora', 'Hora de la reserva en formato HH:MM', 'string') }}"
+            },
+            {
+              "fieldId": "nombre_cliente",
+              "fieldValue": "={{ $fromAI('nombre_cliente', 'Nombre completo del cliente', 'string') }}"
+            },
+            {
+              "fieldId": "telefono",
+              "fieldValue": "={{ $fromAI('telefono', 'Teléfono de contacto del cliente', 'string') }}"
+            },
+            {
+              "fieldId": "num_personas",
+              "fieldValue": "={{ $fromAI('num_personas', 'Número de comensales', 'number') }}"
+            },
+            {
+              "fieldId": "mesa_id",
+              "fieldValue": "={{ $fromAI('mesa_id', 'ID de la mesa seleccionada, ejemplo: M001', 'string') }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $fromAI('email', 'Email del cliente, dejar vacío si no lo proporciona', 'string') }}"
+            },
+            {
+              "fieldId": "tronas",
+              "fieldValue": "={{ $fromAI('tronas', 'Número de tronas/sillas para bebé necesarias, 0 si no necesita', 'number') }}"
+            },
+            {
+              "fieldId": "alzadores",
+              "fieldValue": "={{ $fromAI('alzadores', 'Número de alzadores para niños necesarios, 0 si no necesita', 'number') }}"
+            },
+            {
+              "fieldId": "notas",
+              "fieldValue": "={{ $fromAI('notas', 'Notas especiales o peticiones del cliente', 'string') }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [1140, 480],
+      "id": "tool-crear-reserva",
+      "name": "crear_reserva"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Consulta la disponibilidad de tronas (sillas para bebé) y alzadores (sillas elevadoras para niños) para una fecha específica. Devuelve cuántas están disponibles.",
+        "operation": "getAll",
+        "tableId": "reservas",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "fecha=eq.{{ $fromAI('fecha', 'Fecha a consultar en formato YYYY-MM-DD', 'string') }}&estado=in.(pendiente,confirmada)"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [1280, 480],
+      "id": "tool-sillas",
+      "name": "consultar_sillas_disponibles"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Busca una reserva existente por código de reserva (RES-XXXXX) o por teléfono del cliente. Devuelve todos los detalles de la reserva.",
+        "operation": "getAll",
+        "tableId": "reservas",
+        "returnAll": false,
+        "limit": 5,
+        "filterType": "string",
+        "filterString": "or=(codigo.eq.{{ $fromAI('codigo', 'Código de reserva RES-XXXXX o dejar vacío', 'string') }},telefono.eq.{{ $fromAI('telefono', 'Teléfono del cliente o dejar vacío', 'string') }})"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [1000, 620],
+      "id": "tool-buscar",
+      "name": "buscar_reserva"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Cancela una reserva existente. Cambia el estado a 'cancelada'. Requiere el ID único (UUID) de la reserva, no el código.",
+        "operation": "update",
+        "tableId": "reservas",
+        "filterType": "string",
+        "filterString": "id=eq.{{ $fromAI('reserva_id', 'UUID de la reserva a cancelar', 'string') }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "estado",
+              "fieldValue": "cancelada"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [1140, 620],
+      "id": "tool-cancelar",
+      "name": "cancelar_reserva"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Envía una notificación al personal del restaurante por Telegram. Usar para reservas de grupos grandes (8+ personas), peticiones especiales importantes, o situaciones que requieran atención.",
+        "chatId": "={{ $('Preparar Contexto').item.json.config.telegram_chat_id || '-1001234567890' }}",
+        "text": "={{ $fromAI('mensaje', 'Mensaje para notificar al personal del restaurante', 'string') }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "type": "n8n-nodes-base.telegramTool",
+      "typeVersion": 1,
+      "position": [1280, 620],
+      "id": "tool-telegram",
+      "name": "notificar_personal"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Obtener Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Configuración": {
+      "main": [
+        [
+          {
+            "node": "Preparar Contexto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Contexto": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar_disponibilidad_mesas": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "crear_reserva": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_sillas_disponibles": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "buscar_reserva": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "cancelar_reserva": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "notificar_personal": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "asistente-reservas-restaurante"
+  },
+  "id": "asistente-reservas-restaurante",
+  "tags": [
+    {
+      "name": "AI Agent",
+      "id": "ai-agent"
+    },
+    {
+      "name": "Restaurante",
+      "id": "restaurante"
+    },
+    {
+      "name": "Reservas",
+      "id": "reservas"
+    },
+    {
+      "name": "Supabase",
+      "id": "supabase"
+    }
+  ]
+}
