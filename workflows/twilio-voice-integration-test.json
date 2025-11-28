@@ -1,0 +1,238 @@
+{
+  "name": "Twilio Voice Integration Test",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "twilio-voice",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "28a681c2-f03d-4f89-8533-04b8d215659e",
+      "name": "Twilio Voice Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        304,
+        192
+      ],
+      "webhookId": "twilio-voice-incoming",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Generate TwiML Voice Response\n// Documentation: https://www.twilio.com/docs/voice/twiml\n\nconst caller = $input.first().json.body?.From || 'Unknown';\nconst calledNumber = $input.first().json.body?.To || 'Unknown';\nconst callSid = $input.first().json.body?.CallSid || 'Unknown';\nconst callerCity = $input.first().json.body?.CallerCity || '';\nconst callerCountry = $input.first().json.body?.CallerCountry || '';\n\n// Format caller number for voice (add pauses between digits)\nconst formatPhoneForVoice = (phone) => {\n  return phone.replace(/[^0-9+]/g, '').split('').join(' ');\n};\n\n// Create TwiML response with text-to-speech\nconst twimlResponse = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Say voice=\"alice\" language=\"es-ES\">\n    Hola! Gracias por llamar. Este es un mensaje de prueba de integracion con Twilio.\n  </Say>\n  <Pause length=\"1\"/>\n  <Say voice=\"alice\" language=\"es-ES\">\n    Has llamado desde el numero ${formatPhoneForVoice(caller)}.\n  </Say>\n  <Pause length=\"1\"/>\n  <Say voice=\"alice\" language=\"es-ES\">\n    Si deseas mas informacion, por favor visite nuestra pagina web.\n    Hasta pronto!\n  </Say>\n</Response>`;\n\nreturn [{\n  json: {\n    twiml: twimlResponse,\n    callData: {\n      callSid: callSid,\n      caller: caller,\n      calledNumber: calledNumber,\n      callerCity: callerCity,\n      callerCountry: callerCountry\n    },\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "183bc0af-316b-41f6-8a53-f6bbb22de471",
+      "name": "Generate TwiML Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        192
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.twiml }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/xml"
+              }
+            ]
+          }
+        }
+      },
+      "id": "0a4bbb9e-a7a3-4672-bb19-8c8a02cc38f8",
+      "name": "Respond to Twilio",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        800,
+        192
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "73279dab-3e59-4bed-9507-2595cedf6975",
+      "name": "Manual Trigger - Make Call",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        304,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "to-phone",
+              "name": "toPhone",
+              "value": "+34639756843",
+              "type": "string"
+            },
+            {
+              "id": "from-phone",
+              "name": "fromPhone",
+              "value": "+12694420165",
+              "type": "string"
+            },
+            {
+              "id": "voice-message",
+              "name": "voiceMessage",
+              "value": "Hola, este es un mensaje de prueba de Twilio Voice. Gracias por usar nuestro servicio de automatizacion.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "23969159-465e-4f01-aad9-633c613ed389",
+      "name": "Set Call Parameters",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "call",
+        "from": "={{ $json.fromPhone }}",
+        "to": "={{ $json.toPhone }}",
+        "message": "={{ $json.voiceMessage }}",
+        "options": {}
+      },
+      "id": "e90b5572-6f0d-49e3-ab67-d034d69a5997",
+      "name": "Twilio Make Call",
+      "type": "n8n-nodes-base.twilio",
+      "typeVersion": 1,
+      "position": [
+        800,
+        480
+      ],
+      "credentials": {
+        "twilioApi": {
+          "id": "D8ZWsfAy5MYGssko",
+          "name": "Twilio account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## 📞 Recibir Llamadas Entrantes\n\nEste webhook recibe llamadas entrantes de Twilio y responde con TwiML.\n\n### Configuración en Twilio Console:\n1. Ve a **Phone Numbers** → **Active Numbers**\n2. Selecciona tu número de teléfono\n3. En **'A call comes in'** selecciona **Webhook**\n4. Pega la URL del webhook:\n\n```\nhttps://tu-n8n-url/webhook/twilio-voice\n```\n\n### Respuesta TwiML:\n- Utiliza voz **'alice'** en español\n- Saluda al llamante\n- Indica el número desde el que llama\n\n### Documentación:\n- [TwiML Say](https://www.twilio.com/docs/voice/twiml/say)\n- [Voces disponibles](https://www.twilio.com/docs/voice/twiml/say#voice)",
+        "height": 420,
+        "width": 450
+      },
+      "id": "cca11bec-d8e5-49aa-8e9f-86f093b4058d",
+      "name": "📞 Webhook Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 📱 Hacer Llamadas Salientes\n\nEsta rama permite hacer llamadas de voz programáticas usando la API de Twilio.\n\n### Configuración:\n1. **Crea credenciales Twilio** en n8n\n2. **Modifica los números** en 'Set Call Parameters'\n3. El número **'From'** debe ser un número Twilio\n\n### Credenciales requeridas:\n| Campo | Descripción |\n|-------|-------------|\n| **Account SID** | Desde [Twilio Console](https://www.twilio.com/console) |\n| **Auth Token** | Desde Twilio Console |\n\n### ⚠️ Nota:\nCon cuentas **trial**, solo puedes llamar a números verificados en [Verified Caller IDs](https://www.twilio.com/console/phone-numbers/verified).",
+        "height": 350,
+        "width": 450
+      },
+      "id": "fa6e858c-5ada-4bb2-94b6-46f24ba0da31",
+      "name": "📱 Make Call Info",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        448
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Twilio Voice Webhook": {
+      "main": [
+        [
+          {
+            "node": "Generate TwiML Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate TwiML Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Twilio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger - Make Call": {
+      "main": [
+        [
+          {
+            "node": "Set Call Parameters",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Call Parameters": {
+      "main": [
+        [
+          {
+            "node": "Twilio Make Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5a227a95-d5fc-4292-aace-78a946779e07",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "313f4354b134db69e835734dfd6bbc0e10a924f5f5ef85a82cc1d7cc93fa8a0a"
+  },
+  "id": "kZ096RSYu282faE9",
+  "tags": [
+    {
+      "updatedAt": "2025-11-28T15:51:35.973Z",
+      "createdAt": "2025-11-28T15:51:35.973Z",
+      "id": "8GcUczMjHnYx31lQ",
+      "name": "twilio"
+    },
+    {
+      "updatedAt": "2025-11-28T15:51:35.967Z",
+      "createdAt": "2025-11-28T15:51:35.967Z",
+      "id": "Bw0BohGbw9zEyQe5",
+      "name": "voice"
+    },
+    {
+      "updatedAt": "2025-11-28T15:51:35.970Z",
+      "createdAt": "2025-11-28T15:51:35.970Z",
+      "id": "dTGgzsyk2njB7BXf",
+      "name": "test"
+    }
+  ]
+}
