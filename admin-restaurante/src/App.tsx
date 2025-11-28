@@ -7,7 +7,11 @@ import ReservasHoy from './pages/ReservasHoy';
 import Semana from './pages/Semana';
 import Estadisticas from './pages/Estadisticas';
 import Clientes from './pages/Clientes';
+import Chat from './pages/Chat';
 import './App.css';
+
+// Importar estilos del chat de n8n (se cargarán cuando se instale el paquete)
+// import '@n8n/chat/style.css';
 
 function App() {
   return (
@@ -22,6 +26,7 @@ function App() {
           <Route path="semana" element={<Semana />} />
           <Route path="estadisticas" element={<Estadisticas />} />
           <Route path="clientes" element={<Clientes />} />
+          <Route path="chat" element={<Chat />} />
         </Route>
       </Routes>
     </BrowserRouter>

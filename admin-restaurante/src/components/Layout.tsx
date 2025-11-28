@@ -9,6 +9,7 @@ const navItems = [
   { path: '/semana', label: 'Semana', icon: '📆' },
   { path: '/estadisticas', label: 'Estadísticas', icon: '📈' },
   { path: '/clientes', label: 'Clientes', icon: '👥' },
+  { path: '/chat', label: 'Chat AI', icon: '💬' },
 ];
 
 export default function Layout() {
