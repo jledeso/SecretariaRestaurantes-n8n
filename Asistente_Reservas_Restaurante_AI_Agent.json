@@ -277,7 +277,7 @@
     {
       "parameters": {
         "descriptionType": "manual",
-        "toolDescription": "Verifica qué mesas están disponibles para una fecha, hora y número de personas específicos. Opcionalmente filtra por zona (Terraza, Interior, Privado, etc.). Devuelve lista de mesas con ID, zona, área, capacidad y características.",
+        "toolDescription": "Verifica qué mesas están disponibles para una fecha, hora y número de personas específicos. IMPORTANTE: Devuelve lista de mesas con el campo 'id' (ej: M001, M002, M003). DEBES usar el valor EXACTO del campo 'id' al crear una reserva, NO inventes nombres descriptivos como 'mesa_romantica'.",
         "operation": "getAll",
         "tableId": "mesas",
         "returnAll": true,
@@ -292,6 +292,7 @@
       ],
       "id": "c5372ab2-bf61-406a-a476-2d10b2a62f0f",
       "name": "verificar_disponibilidad_mesas",
+      "onError": "continueRegularOutput",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
@@ -302,7 +303,7 @@
     {
       "parameters": {
         "descriptionType": "manual",
-        "toolDescription": "Crea una nueva reserva en el restaurante. Requiere: fecha (YYYY-MM-DD), hora (HH:MM), nombre_cliente, telefono, num_personas, mesa_id. Opcionales: email, tronas (número), alzadores (número), notas. Devuelve el código de confirmación.",
+        "toolDescription": "Crea una nueva reserva en el restaurante. CRÍTICO: mesa_id DEBE ser el ID exacto de la tabla mesas (ej: M001, M002, M003), NO nombres descriptivos como 'mesa_romantica'. Usa el 'id' que devolvió verificar_disponibilidad_mesas. Requiere: fecha (YYYY-MM-DD), hora (HH:MM), nombre_cliente, telefono, num_personas, mesa_id (ej: M001). Opcionales: email, tronas, alzadores, notas. Si la herramienta falla, informa al cliente del error.",
         "tableId": "reservas",
         "fieldsUi": {
           "fieldValues": [
@@ -328,7 +329,7 @@
             },
             {
               "fieldId": "mesa_id",
-              "fieldValue": "={{ $fromAI('mesa_id', 'ID de la mesa seleccionada, ejemplo: M001', 'string') }}"
+              "fieldValue": "={{ $fromAI('mesa_id', 'ID EXACTO de la mesa (ej: M001, M002). DEBE ser el valor del campo id de la tabla mesas, NO un nombre descriptivo', 'string') }}"
             },
             {
               "fieldId": "email",
@@ -357,6 +358,7 @@
       ],
       "id": "37fa530f-585c-46d9-9f92-78180474f5c0",
       "name": "crear_reserva",
+      "onError": "continueRegularOutput",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
@@ -382,6 +384,7 @@
       ],
       "id": "eed34d4a-ef14-436f-a924-4ece3f955be6",
       "name": "consultar_sillas_disponibles",
+      "onError": "continueRegularOutput",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
@@ -407,6 +410,7 @@
       ],
       "id": "b586591b-2889-45d6-a934-806e9156e1fe",
       "name": "buscar_reserva",
+      "onError": "continueRegularOutput",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
@@ -439,6 +443,7 @@
       ],
       "id": "7aeeb87a-b4fc-4996-bdff-0e8605a0846f",
       "name": "cancelar_reserva",
+      "onError": "continueRegularOutput",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
@@ -488,6 +493,7 @@
       ],
       "id": "5f738793-1d3e-41e9-ac88-9b82eb9a9eb8",
       "name": "obtener_config_restaurante",
+      "onError": "continueRegularOutput",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",

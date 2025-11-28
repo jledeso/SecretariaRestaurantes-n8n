@@ -10,21 +10,26 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-900, -400],
-      "id": "intro-note",
+      "position": [
+        -576,
+        -704
+      ],
+      "id": "850b6fdd-19d6-4e38-80a8-353e3b32969d",
       "name": "Introducción"
     },
     {
       "parameters": {
-        "content": "## 📱 Canal: Web Chat\n\nRecibe mensajes del Web Chat integrado de n8n.\n\nEl Chat Trigger va directo al AI Agent.",
-        "height": 160,
+        "content": "## 📱 Canal: Web Chat\n\nRecibe mensajes del Web Chat integrado de n8n.\n\n**Flujo:**\n1. Chat Trigger recibe mensaje\n2. Preparar Contexto Chat (source='chat')\n3. AI Agent procesa\n4. Detectar Origen → respuesta Chat",
         "width": 280,
         "color": 4
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-900, 100],
-      "id": "nota-chat",
+      "position": [
+        -576,
+        -208
+      ],
+      "id": "6178eb8f-d6b9-460c-873b-7455739b6437",
       "name": "Nota Chat"
     },
     {
@@ -36,8 +41,11 @@
       },
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-900, 280],
-      "id": "nota-twilio",
+      "position": [
+        -576,
+        -16
+      ],
+      "id": "fa0df4fa-d688-4339-bcbf-6a75453fa6df",
       "name": "Nota Twilio"
     },
     {
@@ -48,10 +56,66 @@
       },
       "type": "@n8n/n8n-nodes-langchain.chatTrigger",
       "typeVersion": 1.4,
-      "position": [-624, -112],
-      "id": "b9a3de93-7cd2-4437-b50d-3b11e3dc3725",
+      "position": [
+        -304,
+        -416
+      ],
+      "id": "f5ad0d33-e8ca-4998-8c90-4dbf6ff39ebb",
       "name": "Chat Trigger",
       "webhookId": "4b40a989-96e2-4c74-8ee1-78b2c2fe7fb2"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "chat-input",
+              "name": "chatInput",
+              "value": "={{ $json.chatInput }}",
+              "type": "string"
+            },
+            {
+              "id": "session-id",
+              "name": "sessionId",
+              "value": "={{ $json.sessionId }}",
+              "type": "string"
+            },
+            {
+              "id": "source",
+              "name": "source",
+              "value": "chat",
+              "type": "string"
+            },
+            {
+              "id": "fecha-actual",
+              "name": "fecha_actual",
+              "value": "={{ $now.format('yyyy-MM-dd') }}",
+              "type": "string"
+            },
+            {
+              "id": "hora-actual",
+              "name": "hora_actual",
+              "value": "={{ $now.format('HH:mm') }}",
+              "type": "string"
+            },
+            {
+              "id": "dia-semana",
+              "name": "dia_semana",
+              "value": "={{ ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$now.weekday] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -80,
+        -416
+      ],
+      "id": "fd8f053b-579a-4fe2-ac04-c31c3378bc06",
+      "name": "Preparar Contexto Chat"
     },
     {
       "parameters": {
@@ -62,15 +126,17 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [-624, 320],
-      "id": "twilio-webhook",
+      "position": [
+        -304,
+        32
+      ],
+      "id": "434a06b5-5dda-4652-aa4f-5ca0506dd616",
       "name": "Twilio Voice Webhook",
       "webhookId": "twilio-restaurante-voice",
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "mode": "rules",
         "rules": {
           "values": [
             {
@@ -127,8 +193,11 @@
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [-400, 320],
-      "id": "switch-twilio-input",
+      "position": [
+        -80,
+        32
+      ],
+      "id": "6527ba43-8294-42b4-9a04-2c47bbc5a779",
       "name": "¿Tiene Mensaje?"
     },
     {
@@ -137,8 +206,11 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-176, 420],
-      "id": "generate-greeting-twiml",
+      "position": [
+        160,
+        128
+      ],
+      "id": "eb60ab45-2ee7-4b6b-9900-5945082eed75",
       "name": "Generar Saludo TwiML",
       "onError": "continueRegularOutput"
     },
@@ -160,8 +232,11 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [80, 420],
-      "id": "respond-greeting",
+      "position": [
+        416,
+        128
+      ],
+      "id": "9da7ee1e-6a84-4b9b-872f-f9492c14088b",
       "name": "Responder Saludo"
     },
     {
@@ -222,8 +297,11 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [-176, 240],
-      "id": "preparar-contexto-twilio",
+      "position": [
+        160,
+        -64
+      ],
+      "id": "3169fff8-13f9-48b2-9149-75d1d6f8ab8e",
       "name": "Preparar Contexto Twilio"
     },
     {
@@ -234,8 +312,11 @@
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
-      "position": [320, 112],
-      "id": "a8f915bb-3586-45de-83e2-c516f3b5331b",
+      "position": [
+        656,
+        -192
+      ],
+      "id": "d6716bd4-9e34-47c8-8a3b-aabf1c0ce792",
       "name": "Simple Memory"
     },
     {
@@ -247,8 +328,11 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
-      "position": [208, 0],
-      "id": "8e4eb924-c3c3-4a36-ab9b-68397af50f1a",
+      "position": [
+        544,
+        -304
+      ],
+      "id": "28fde969-5118-4f0e-90ef-c773ed712e23",
       "name": "OpenRouter Chat Model",
       "credentials": {
         "openRouterApi": {
@@ -262,20 +346,36 @@
         "promptType": "define",
         "text": "={{ $json.chatInput }}",
         "options": {
-          "systemMessage": "# ROL\nEres Marina, la asistente virtual de reservas de La Terraza Mediterránea.\n\n# PERSONALIDAD\n- Amable, eficiente y servicial\n- Hablas de tú a los clientes\n- Transmites la esencia mediterránea y relajada del restaurante\n- Eres proactiva ofreciendo alternativas cuando no hay disponibilidad\n- IMPORTANTE: Responde de forma CONCISA para llamadas telefónicas (máximo 2-3 frases por respuesta)\n\n# CANAL ACTUAL\n{{ $json.source === 'twilio' ? 'LLAMADA TELEFÓNICA - Sé breve y claro. El cliente está hablando por teléfono.' : 'CHAT WEB - Puedes ser más detallado.' }}\n\n# HERRAMIENTAS DISPONIBLES\nTienes acceso a las siguientes herramientas que DEBES usar:\n\n1. **obtener_config_restaurante**: Obtiene configuración general.\n2. **obtener_zonas_restaurante**: Obtiene las zonas disponibles.\n3. **obtener_info_restaurante**: Obtiene información por categorías.\n4. **verificar_disponibilidad_mesas**: Verifica mesas disponibles.\n5. **crear_reserva**: Crea una nueva reserva.\n6. **consultar_sillas_disponibles**: Consulta tronas y alzadores.\n7. **buscar_reserva**: Busca reserva por código o teléfono.\n8. **cancelar_reserva**: Cancela una reserva existente.\n9. **notificar_personal**: Notifica al personal por Telegram.\n\n# REGLAS IMPORTANTES\n- SIEMPRE usa las herramientas para obtener información actualizada\n- NO inventes datos, consulta siempre la base de datos\n- Tolerancia de llegada: 15 minutos\n- Duración estándar de reserva: 2 horas\n- Para llamadas telefónicas: respuestas cortas y claras\n\n# FECHA Y HORA ACTUAL\n- Fecha: {{ $json.fecha_actual || $now.format('yyyy-MM-dd') }}\n- Hora: {{ $json.hora_actual || $now.format('HH:mm') }}\n- Día: {{ $json.dia_semana || ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$now.weekday] }}\n\n# TELÉFONO DEL CLIENTE (si es llamada)\n{{ $json.callerPhone || 'No disponible' }}\n\n# FLUJO DE CONVERSACIÓN\n\n## Para NUEVA RESERVA:\n1. Preguntar fecha y hora deseada\n2. Preguntar número de comensales\n3. Verificar disponibilidad con herramienta\n4. Ofrecer opciones disponibles\n5. Pedir nombre y teléfono\n6. Confirmar y crear reserva\n7. Dar código de confirmación\n\n## Para CONSULTAS:\n- Usar herramientas para información actualizada\n- Responder de forma concisa en llamadas\n\n## Para CANCELACIONES:\n1. Pedir código de reserva o teléfono\n2. Buscar y confirmar datos\n3. Proceder con cancelación",
+          "systemMessage": "# ROL\nEres Marina, la asistente virtual de reservas de La Terraza Mediterránea.\n\n# PERSONALIDAD\n- Amable, eficiente y servicial\n- Hablas de tú a los clientes\n- Transmites la esencia mediterránea y relajada del restaurante\n- Eres proactiva ofreciendo alternativas cuando no hay disponibilidad\n- IMPORTANTE: Responde de forma CONCISA para llamadas telefónicas (máximo 2-3 frases por respuesta)\n\n# CANAL ACTUAL\n{{ $json.source === 'twilio' ? 'LLAMADA TELEFÓNICA - Sé breve y claro. El cliente está hablando por teléfono.' : 'CHAT WEB - Puedes ser más detallado.' }}\n\n# HERRAMIENTAS DISPONIBLES\nTienes acceso a las siguientes herramientas que DEBES usar:\n\n1. **obtener_config_restaurante**: Obtiene configuración general.\n2. **obtener_zonas_restaurante**: Obtiene las zonas disponibles.\n3. **obtener_info_restaurante**: Obtiene información por categorías.\n4. **verificar_disponibilidad_mesas**: Verifica mesas disponibles.\n5. **crear_reserva**: Crea una nueva reserva.\n6. **consultar_sillas_disponibles**: Consulta tronas y alzadores.\n7. **buscar_reserva**: Busca reserva por código o teléfono.\n8. **cancelar_reserva**: Cancela una reserva existente.\n9. **notificar_personal**: Notifica al personal por Telegram.\n\n# REGLAS IMPORTANTES\n- SIEMPRE usa las herramientas para obtener información actualizada\n- NO inventes datos, consulta siempre la base de datos\n- Tolerancia de llegada: 15 minutos\n- Duración estándar de reserva: 2 horas\n- Para llamadas telefónicas: respuestas cortas y claras\n\n# REGLA CRÍTICA SOBRE MESAS\n- Los IDs de mesa son códigos como M001, M002, M003, etc.\n- NUNCA inventes nombres descriptivos como 'mesa_romantica' o 'mesa_terraza'\n- SIEMPRE usa el valor EXACTO del campo 'id' que devuelve verificar_disponibilidad_mesas\n- Si una herramienta falla, INFORMA al cliente del error, NO confirmes la reserva\n- Ejemplo correcto: mesa_id='M005'. Ejemplo INCORRECTO: mesa_id='mesa_romantica'\n\n# FECHA Y HORA ACTUAL\n- Fecha: {{ $json.fecha_actual || $now.format('yyyy-MM-dd') }}\n- Hora: {{ $json.hora_actual || $now.format('HH:mm') }}\n- Día: {{ $json.dia_semana || ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$now.weekday] }}\n\n# TELÉFONO DEL CLIENTE (si es llamada)\n{{ $json.callerPhone || 'No disponible' }}\n\n# FLUJO DE CONVERSACIÓN\n\n## Para NUEVA RESERVA:\n1. Preguntar fecha y hora deseada\n2. Preguntar número de comensales\n3. Verificar disponibilidad con herramienta\n4. Ofrecer opciones disponibles\n5. Pedir nombre y teléfono\n6. Confirmar y crear reserva\n7. Dar código de confirmación\n\n## Para CONSULTAS:\n- Usar herramientas para información actualizada\n- Responder de forma concisa en llamadas\n\n## Para CANCELACIONES:\n1. Pedir código de reserva o teléfono\n2. Buscar y confirmar datos\n3. Proceder con cancelación",
           "maxIterations": 10,
           "returnIntermediateSteps": false
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2,
-      "position": [320, -112],
-      "id": "5306209b-1293-4493-b025-015aa2e36f26",
+      "position": [
+        656,
+        -416
+      ],
+      "id": "4e955467-3677-4ea1-ae88-5fd67b69e7ce",
       "name": "AI Agent"
     },
     {
       "parameters": {
-        "mode": "rules",
+        "jsCode": "// Determinar el origen del mensaje (Chat o Twilio)\n// Intentamos acceder a los nodos de contexto de forma segura\nlet source = 'chat'; // Por defecto es chat\nlet sessionId = '';\n\ntry {\n  // Intentar obtener el contexto de Twilio\n  const twilioContext = $('Preparar Contexto Twilio').first();\n  if (twilioContext && twilioContext.json && twilioContext.json.source === 'twilio') {\n    source = 'twilio';\n    sessionId = twilioContext.json.sessionId || '';\n  }\n} catch (e) {\n  // Si falla, intentar obtener el contexto de Chat\n  try {\n    const chatContext = $('Preparar Contexto Chat').first();\n    if (chatContext && chatContext.json) {\n      source = 'chat';\n      sessionId = chatContext.json.sessionId || '';\n    }\n  } catch (e2) {\n    // Si ambos fallan, asumimos chat\n    source = 'chat';\n  }\n}\n\nconst agentOutput = $input.first().json.output || $input.first().json.text || '';\n\nreturn [{\n  json: {\n    output: agentOutput,\n    source: source,\n    sessionId: sessionId\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        -416
+      ],
+      "id": "d2c96063-50d6-4511-8355-d43b812e0674",
+      "name": "Detectar Origen",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
         "rules": {
           "values": [
             {
@@ -287,7 +387,7 @@
                 },
                 "conditions": [
                   {
-                    "leftValue": "={{ $('Preparar Contexto Twilio').item.json.source }}",
+                    "leftValue": "={{ $json.source }}",
                     "rightValue": "twilio",
                     "operator": {
                       "type": "string",
@@ -309,19 +409,25 @@
       },
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.2,
-      "position": [560, -112],
-      "id": "switch-output",
+      "position": [
+        1088,
+        -416
+      ],
+      "id": "dd19333c-caf0-4c11-a591-2861a792a3d9",
       "name": "¿Origen?",
       "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "// Genera TwiML con la respuesta del AI Agent\nconst agentResponse = $input.first().json.output || $input.first().json.text || 'Lo siento, no pude procesar tu solicitud.';\nconst sessionId = $('Preparar Contexto Twilio').item.json.sessionId;\n\n// Limpiar respuesta para TTS (quitar markdown, emojis problemáticos)\nconst cleanResponse = agentResponse\n  .replace(/\\*\\*/g, '')\n  .replace(/\\*/g, '')\n  .replace(/#{1,6}\\s/g, '')\n  .replace(/[\\u{1F600}-\\u{1F64F}]/gu, '')\n  .replace(/[\\u{1F300}-\\u{1F5FF}]/gu, '')\n  .replace(/[\\u{1F680}-\\u{1F6FF}]/gu, '')\n  .replace(/[\\u{2600}-\\u{26FF}]/gu, '')\n  .replace(/[\\u{2700}-\\u{27BF}]/gu, '')\n  .substring(0, 500); // Limitar longitud para TTS\n\n// TwiML con respuesta y nuevo Gather para continuar conversación\nconst twimlResponse = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Say voice=\"Polly.Lucia\" language=\"es-ES\">\n    ${cleanResponse}\n  </Say>\n  <Gather input=\"speech\" language=\"es-ES\" speechTimeout=\"3\" action=\"/webhook/twilio-restaurante\" method=\"POST\">\n    <Say voice=\"Polly.Lucia\" language=\"es-ES\">\n      ¿Hay algo mas en lo que pueda ayudarte?\n    </Say>\n  </Gather>\n  <Say voice=\"Polly.Lucia\" language=\"es-ES\">\n    Gracias por llamar a La Terraza Mediterranea. Hasta pronto.\n  </Say>\n</Response>`;\n\nreturn [{\n  json: {\n    twiml: twimlResponse,\n    originalResponse: agentResponse,\n    cleanedResponse: cleanResponse,\n    sessionId: sessionId\n  }\n}];"
+        "jsCode": "// Genera TwiML con la respuesta del AI Agent\nconst agentResponse = $input.first().json.output || $input.first().json.text || 'Lo siento, no pude procesar tu solicitud.';\nconst sessionId = $input.first().json.sessionId || '';\n\n// Limpiar respuesta para TTS (quitar markdown, emojis problemáticos)\nconst cleanResponse = agentResponse\n  .replace(/\\*\\*/g, '')\n  .replace(/\\*/g, '')\n  .replace(/#{1,6}\\s/g, '')\n  .replace(/[\\u{1F600}-\\u{1F64F}]/gu, '')\n  .replace(/[\\u{1F300}-\\u{1F5FF}]/gu, '')\n  .replace(/[\\u{1F680}-\\u{1F6FF}]/gu, '')\n  .replace(/[\\u{2600}-\\u{26FF}]/gu, '')\n  .replace(/[\\u{2700}-\\u{27BF}]/gu, '')\n  .substring(0, 500); // Limitar longitud para TTS\n\n// TwiML con respuesta y nuevo Gather para continuar conversación\nconst twimlResponse = `<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Response>\n  <Say voice=\"Polly.Lucia\" language=\"es-ES\">\n    ${cleanResponse}\n  </Say>\n  <Gather input=\"speech\" language=\"es-ES\" speechTimeout=\"3\" action=\"/webhook/twilio-restaurante\" method=\"POST\">\n    <Say voice=\"Polly.Lucia\" language=\"es-ES\">\n      ¿Hay algo mas en lo que pueda ayudarte?\n    </Say>\n  </Gather>\n  <Say voice=\"Polly.Lucia\" language=\"es-ES\">\n    Gracias por llamar a La Terraza Mediterranea. Hasta pronto.\n  </Say>\n</Response>`;\n\nreturn [{\n  json: {\n    twiml: twimlResponse,\n    originalResponse: agentResponse,\n    cleanedResponse: cleanResponse,\n    sessionId: sessionId\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [800, -32],
-      "id": "generate-response-twiml",
+      "position": [
+        1328,
+        -336
+      ],
+      "id": "489c4b9c-f667-4ad6-8401-22e8da3c9bbf",
       "name": "Generar Respuesta TwiML",
       "onError": "continueRegularOutput"
     },
@@ -343,14 +449,17 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [1040, -32],
-      "id": "respond-twilio-agent",
+      "position": [
+        1568,
+        -336
+      ],
+      "id": "f6b671df-459e-420b-82e2-d80960475d89",
       "name": "Responder a Twilio"
     },
     {
       "parameters": {
         "descriptionType": "manual",
-        "toolDescription": "Verifica qué mesas están disponibles para una fecha, hora y número de personas específicos. Devuelve lista de mesas con ID, zona, área, capacidad y características.",
+        "toolDescription": "Verifica qué mesas están disponibles para una fecha, hora y número de personas específicos. IMPORTANTE: Devuelve lista de mesas con el campo 'id' (ej: M001, M002). DEBES usar el valor EXACTO del campo 'id' cuando crees una reserva, NO inventes nombres descriptivos.",
         "operation": "getAll",
         "tableId": "mesas",
         "returnAll": true,
@@ -359,20 +468,24 @@
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [464, 112],
-      "id": "c5372ab2-bf61-406a-a476-2d10b2a62f0f",
+      "position": [
+        800,
+        -192
+      ],
+      "id": "2681ac7b-0848-4bfa-8880-eb5ff59ae4ad",
       "name": "verificar_disponibilidad_mesas",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "descriptionType": "manual",
-        "toolDescription": "Crea una nueva reserva en el restaurante. Requiere: fecha (YYYY-MM-DD), hora (HH:MM), nombre_cliente, telefono, num_personas, mesa_id. Opcionales: email, tronas, alzadores, notas.",
+        "toolDescription": "Crea una nueva reserva en el restaurante. CRÍTICO: mesa_id DEBE ser el ID exacto de la tabla mesas (ej: M001, M002, M003), NO nombres descriptivos. Usa el 'id' que devolvió verificar_disponibilidad_mesas. Requiere: fecha (YYYY-MM-DD), hora (HH:MM), nombre_cliente, telefono, num_personas, mesa_id (ej: M001). Opcionales: email, tronas, alzadores, notas. Si la herramienta falla, informa al cliente del error.",
         "tableId": "reservas",
         "fieldsUi": {
           "fieldValues": [
@@ -398,7 +511,7 @@
             },
             {
               "fieldId": "mesa_id",
-              "fieldValue": "={{ $fromAI('mesa_id', 'ID de la mesa seleccionada', 'string') }}"
+              "fieldValue": "={{ $fromAI('mesa_id', 'ID EXACTO de la mesa (ej: M001, M002). DEBE ser el valor del campo id de la tabla mesas, NO un nombre descriptivo', 'string') }}"
             },
             {
               "fieldId": "email",
@@ -421,37 +534,45 @@
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [608, 112],
-      "id": "37fa530f-585c-46d9-9f92-78180474f5c0",
+      "position": [
+        944,
+        -192
+      ],
+      "id": "fa1e8341-1522-480b-a96d-59430eb8e3fa",
       "name": "crear_reserva",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
         "descriptionType": "manual",
         "toolDescription": "Consulta la disponibilidad de tronas y alzadores para una fecha específica.",
         "operation": "getAll",
-        "tableId": "reservas",
+        "tableId": "disponibilidad_sillas",
         "returnAll": true,
         "filterType": "string",
-        "filterString": "fecha=eq.{{ $fromAI('fecha', 'Fecha a consultar YYYY-MM-DD', 'string') }}&estado=in.(pendiente,confirmada)"
+        "filterString": "=fecha=eq.{{ $fromAI('fecha', 'Fecha a consultar YYYY-MM-DD', 'string') }}&estado=in.(pendiente,confirmada)"
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [752, 112],
-      "id": "eed34d4a-ef14-436f-a924-4ece3f955be6",
+      "position": [
+        1088,
+        -192
+      ],
+      "id": "bf74ac28-2068-48c7-8baf-d38d8626e930",
       "name": "consultar_sillas_disponibles",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -461,19 +582,23 @@
         "tableId": "reservas",
         "limit": 5,
         "filterType": "string",
-        "filterString": "or=(codigo.eq.{{ $fromAI('codigo', 'Código de reserva o vacío', 'string') }},telefono.eq.{{ $fromAI('telefono', 'Teléfono del cliente o vacío', 'string') }})"
+        "filterString": "=or=(codigo.eq.{{ $fromAI('codigo', 'Código de reserva o vacío', 'string') }},telefono.eq.{{ $fromAI('telefono', 'Teléfono del cliente o vacío', 'string') }})"
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [464, 240],
-      "id": "b586591b-2889-45d6-a934-806e9156e1fe",
+      "position": [
+        800,
+        -64
+      ],
+      "id": "1f192c74-cb91-4f74-947e-66f36dfd0b28",
       "name": "buscar_reserva",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -482,7 +607,7 @@
         "operation": "update",
         "tableId": "reservas",
         "filterType": "string",
-        "filterString": "id=eq.{{ $fromAI('reserva_id', 'UUID de la reserva a cancelar', 'string') }}",
+        "filterString": "=id=eq.{{ $fromAI('reserva_id', 'UUID de la reserva a cancelar', 'string') }}",
         "fieldsUi": {
           "fieldValues": [
             {
@@ -494,15 +619,19 @@
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [608, 240],
-      "id": "7aeeb87a-b4fc-4996-bdff-0e8605a0846f",
+      "position": [
+        944,
+        -64
+      ],
+      "id": "1b29d94a-aa9b-41f8-bca4-c5900b6311dc",
       "name": "cancelar_reserva",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -516,8 +645,11 @@
       },
       "type": "n8n-nodes-base.telegramTool",
       "typeVersion": 1,
-      "position": [752, 240],
-      "id": "c6d8cc62-c62e-4027-8640-07d59e908810",
+      "position": [
+        1088,
+        -64
+      ],
+      "id": "abd7db14-c90f-4206-9a56-18d8fb2b40b1",
       "name": "notificar_personal",
       "webhookId": "a5aa1b24-94be-4a88-963f-889661e83ffb",
       "credentials": {
@@ -537,15 +669,19 @@
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [896, 112],
-      "id": "5f738793-1d3e-41e9-ac88-9b82eb9a9eb8",
+      "position": [
+        1232,
+        -192
+      ],
+      "id": "db26b252-7210-4c8b-9966-32e33fb8dc64",
       "name": "obtener_config_restaurante",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -559,15 +695,19 @@
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [896, 240],
-      "id": "728a7efa-e5ab-4227-bbb4-00f644a66bad",
+      "position": [
+        1232,
+        -64
+      ],
+      "id": "a86e5fe1-50ee-4fa5-81be-7b2aacdcc1df",
       "name": "obtener_zonas_restaurante",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -579,20 +719,35 @@
       },
       "type": "n8n-nodes-base.supabaseTool",
       "typeVersion": 1,
-      "position": [1040, 112],
-      "id": "ec1fc983-aed1-439f-b679-e246814ae26c",
+      "position": [
+        1376,
+        -192
+      ],
+      "id": "d2a4ebf8-8a3b-43db-8742-6edb4bed9280",
       "name": "obtener_info_restaurante",
       "credentials": {
         "supabaseApi": {
           "id": "4rnK3RJimD1tbCQL",
           "name": "Supabase account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "pinData": {},
   "connections": {
     "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "Preparar Contexto Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar Contexto Chat": {
       "main": [
         [
           {
@@ -658,6 +813,17 @@
       "main": [
         [
           {
+            "node": "Detectar Origen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detectar Origen": {
+      "main": [
+        [
+          {
             "node": "¿Origen?",
             "type": "main",
             "index": 0
@@ -673,8 +839,7 @@
             "type": "main",
             "index": 0
           }
-        ],
-        []
+        ]
       ]
     },
     "Generar Respuesta TwiML": {
@@ -814,25 +979,41 @@
   "settings": {
     "executionOrder": "v1"
   },
+  "versionId": "32addced-a5e5-47bf-85bb-fd06e993d796",
+  "meta": {
+    "instanceId": "313f4354b134db69e835734dfd6bbc0e10a924f5f5ef85a82cc1d7cc93fa8a0a"
+  },
+  "id": "QPpooR47PI7XtGBv",
   "tags": [
     {
+      "name": "Voice",
+      "id": "6MN614ECKRafMDTw",
+      "updatedAt": "2025-11-28T16:58:33.334Z",
+      "createdAt": "2025-11-28T16:58:33.334Z"
+    },
+    {
+      "updatedAt": "2025-11-27T11:29:49.704Z",
+      "createdAt": "2025-11-27T11:29:49.704Z",
+      "id": "inO2yn1FDCs9sUNT",
       "name": "AI Agent"
     },
     {
+      "updatedAt": "2025-11-27T11:29:49.716Z",
+      "createdAt": "2025-11-27T11:29:49.716Z",
+      "id": "jMck8HrIGWoqH4OV",
       "name": "Restaurante"
     },
     {
+      "updatedAt": "2025-11-27T11:29:49.722Z",
+      "createdAt": "2025-11-27T11:29:49.722Z",
+      "id": "jW4ZRLqr81Gw8NSE",
       "name": "Reservas"
     },
     {
-      "name": "Twilio"
-    },
-    {
-      "name": "Voice"
+      "name": "Twilio",
+      "id": "p6ZhRn4qqEXWCvKg",
+      "updatedAt": "2025-11-28T16:58:33.325Z",
+      "createdAt": "2025-11-28T16:58:33.325Z"
     }
-  ],
-  "meta": {
-    "templateCredsSetupCompleted": false,
-    "instanceId": "asistente-reservas-twilio-integrado"
-  }
+  ]
 }
