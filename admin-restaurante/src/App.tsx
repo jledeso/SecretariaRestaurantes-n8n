@@ -10,8 +10,8 @@ import Clientes from './pages/Clientes';
 import Chat from './pages/Chat';
 import './App.css';
 
-// Importar estilos del chat de n8n (se cargarán cuando se instale el paquete)
-// import '@n8n/chat/style.css';
+// Importar estilos del chat de n8n
+import '@n8n/chat/style.css';
 
 function App() {
   return (

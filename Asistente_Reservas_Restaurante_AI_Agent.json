@@ -87,7 +87,9 @@
         "initialMessages": "¡Hola! 👋 Soy Marina, tu asistente de reservas de La Terraza Mediterránea.\n\n¿En qué puedo ayudarte hoy?\n\n• Hacer una reserva\n• Consultar disponibilidad\n• Cancelar o modificar reserva\n• Información del restaurante",
         "options": {
           "allowFileUploads": false,
+          "allowedOrigins": "*",
           "inputPlaceholder": "Escribe tu mensaje aquí...",
+          "loadPreviousSession": "notSupported",
           "showWelcomeScreen": false,
           "subtitle": "Asistente de reservas 24/7",
           "title": "🍽️ La Terraza Mediterránea",

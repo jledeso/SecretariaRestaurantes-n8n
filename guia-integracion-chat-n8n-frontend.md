@@ -8,6 +8,44 @@
 
 ---
 
+## ⚡ Cambios Realizados en el Workflow (28/11/2025)
+
+Se han aplicado los siguientes cambios al archivo `Asistente_Reservas_Restaurante_AI_Agent.json` para habilitar la integración con frontend externo:
+
+### Modificaciones en el nodo Chat Trigger:
+
+| Parámetro | Antes | Después | Motivo |
+|-----------|-------|---------|--------|
+| `allowedOrigins` | ❌ No existía | `"*"` | Permite CORS desde cualquier origen (necesario para desarrollo) |
+| `loadPreviousSession` | ❌ No existía | `"notSupported"` | Indica que la carga de sesiones anteriores no está soportada |
+
+### Configuración Final del Chat Trigger:
+
+```json
+{
+  "options": {
+    "allowFileUploads": false,
+    "allowedOrigins": "*",
+    "inputPlaceholder": "Escribe tu mensaje aquí...",
+    "loadPreviousSession": "notSupported",
+    "showWelcomeScreen": false,
+    "subtitle": "Asistente de reservas 24/7",
+    "title": "🍽️ La Terraza Mediterránea",
+    "responseMode": "lastNode"
+  }
+}
+```
+
+### ⚠️ Importante para Producción:
+
+Para entornos de producción, cambiar `allowedOrigins` de `"*"` a los dominios específicos:
+
+```json
+"allowedOrigins": "https://tu-dominio.com,https://admin.tu-dominio.com"
+```
+
+---
+
 ## 📋 Índice
 
 1. [Visión General](#1-visión-general)
@@ -152,15 +190,22 @@ https://tu-n8n.com/webhook/WEBHOOK_ID/chat
 
 ### 3.2 Configuración del Chat Trigger
 
+> ✅ **ACTUALIZADO**: El archivo `Asistente_Reservas_Restaurante_AI_Agent.json` ya incluye estos cambios.
+
 ```json
 {
   "parameters": {
     "public": true,
-    "mode": "webhook",
+    "initialMessages": "¡Hola! 👋 Soy Marina...",
     "options": {
-      "allowedOrigins": "http://localhost:5173,https://tu-dominio.com",
-      "responseMode": "lastNode",
-      "loadPreviousSession": "notSupported"
+      "allowFileUploads": false,
+      "allowedOrigins": "*",
+      "inputPlaceholder": "Escribe tu mensaje aquí...",
+      "loadPreviousSession": "notSupported",
+      "showWelcomeScreen": false,
+      "subtitle": "Asistente de reservas 24/7",
+      "title": "🍽️ La Terraza Mediterránea",
+      "responseMode": "lastNode"
     }
   },
   "type": "@n8n/n8n-nodes-langchain.chatTrigger",
