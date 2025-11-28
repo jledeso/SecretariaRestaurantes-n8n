@@ -6,8 +6,18 @@ Este flujo de trabajo de n8n implementa una integración completa con **Twilio P
 
 1. **Recibir llamadas entrantes** y responder con mensajes de voz (TwiML)
 2. **Hacer llamadas salientes** programáticas
+3. **Integración con AI Agent** para conversaciones telefónicas inteligentes
 
 Basado en la documentación oficial de Twilio: [Server-side quickstart for Programmable Voice](https://www.twilio.com/docs/voice/quickstart/server)
+
+---
+
+## Workflows Disponibles
+
+| Archivo | Descripción |
+|---------|-------------|
+| `twilio-voice-integration-test.json` | Workflow básico de prueba Twilio |
+| `Asistente_Reservas_Twilio_Integrado.json` | **AI Agent con soporte dual: Chat + Twilio Voice** |
 
 ---
 
@@ -275,4 +285,132 @@ Para importar:
 2. Seleccionar el archivo JSON
 3. Configurar las credenciales de Twilio
 4. Actualizar los números de teléfono
+5. Activar el workflow
+
+---
+
+# 🤖 Workflow Integrado: AI Agent + Twilio Voice
+
+## Archivo: `Asistente_Reservas_Twilio_Integrado.json`
+
+Este workflow combina el **Asistente de Reservas con AI Agent** con **Twilio Voice**, permitiendo:
+
+- **Chat Web**: Funcionalidad existente via Chat Trigger de n8n
+- **Llamadas Telefónicas**: Nueva funcionalidad via Twilio Voice
+
+## Arquitectura Integrada
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│            ASISTENTE RESERVAS RESTAURANTE - AI AGENT + TWILIO VOICE              │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                  │
+│  CANAL 1: Chat Web                                                               │
+│  ┌──────────────┐                                                                │
+│  │ Chat Trigger │─────────────────────────┐                                      │
+│  └──────────────┘                         │                                      │
+│                                           ▼                                      │
+│  CANAL 2: Twilio Voice                ┌────────────┐    ┌─────────────┐         │
+│  ┌──────────────┐   ┌──────────────┐  │  AI Agent  │───▶│  ¿Origen?   │         │
+│  │ Twilio Voice │──▶│ ¿Tiene      │  │  (Marina)  │    │  (Switch)   │         │
+│  │ Webhook      │   │  Mensaje?   │  └────────────┘    └──────┬──────┘         │
+│  └──────────────┘   └──────┬──────┘        ▲                  │                 │
+│                            │               │            ┌─────┴─────┐           │
+│                      ┌─────┴─────┐         │            │           │           │
+│                      │           │         │            ▼           ▼           │
+│                      ▼           ▼         │     ┌──────────┐  (Chat:          │
+│               ┌──────────┐  ┌─────────┐    │     │ Generar  │   respuesta      │
+│               │ Preparar │  │ Saludo  │────┘     │ TwiML    │   normal)        │
+│               │ Contexto │──┘ TwiML   │          └────┬─────┘                   │
+│               │ Twilio   │   │(Gather)│               │                         │
+│               └──────────┘   └────────┘               ▼                         │
+│                                               ┌──────────────┐                  │
+│                                               │ Responder a  │                  │
+│                                               │ Twilio       │                  │
+│                                               └──────────────┘                  │
+│                                                                                  │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+## Flujo de Llamada Telefónica
+
+### 1. Primera Llamada (Sin SpeechResult)
+```
+Cliente llama → Webhook → Switch (Sin Mensaje) → Saludo TwiML
+```
+
+**Respuesta TwiML:**
+```xml
+<Response>
+  <Say voice="Polly.Lucia" language="es-ES">
+    Hola, bienvenido a La Terraza Mediterránea. Soy Marina, tu asistente virtual.
+  </Say>
+  <Gather input="speech" language="es-ES" speechTimeout="3" 
+         action="/webhook/twilio-restaurante" method="POST">
+    <Say voice="Polly.Lucia" language="es-ES">
+      Por favor, dime cómo puedo ayudarte.
+    </Say>
+  </Gather>
+</Response>
+```
+
+### 2. Siguiente Interacción (Con SpeechResult)
+```
+Twilio envía texto transcrito → Webhook → Switch (Con Mensaje) 
+→ Preparar Contexto → AI Agent → Switch Origen → Generar TwiML → Responder
+```
+
+## Configuración en Twilio Console
+
+1. Ir a **Phone Numbers** → **Active Numbers**
+2. Seleccionar tu número
+3. En **Voice Configuration**:
+   - **A call comes in**: Webhook
+   - **URL**: `https://tu-n8n-url/webhook/twilio-restaurante`
+   - **HTTP Method**: POST
+
+## Datos Disponibles en el Contexto
+
+| Campo | Descripción |
+|-------|-------------|
+| `chatInput` | Texto transcrito del habla del cliente |
+| `sessionId` | `twilio-{CallSid}` para mantener contexto |
+| `source` | `twilio` para identificar canal |
+| `callerPhone` | Número del cliente que llama |
+| `callSid` | ID único de la llamada |
+| `fecha_actual` | Fecha actual |
+| `hora_actual` | Hora actual |
+| `dia_semana` | Día de la semana |
+
+## Voces Polly Disponibles (Español)
+
+| Voz | Idioma | Descripción |
+|-----|--------|-------------|
+| `Polly.Lucia` | es-ES | Española, femenina |
+| `Polly.Conchita` | es-ES | Española, femenina |
+| `Polly.Enrique` | es-ES | Español, masculino |
+| `Polly.Mia` | es-MX | Mexicana, femenina |
+| `Polly.Penelope` | es-US | US Spanish, femenina |
+
+## Prompt del AI Agent para Twilio
+
+El sistema detecta automáticamente si es llamada telefónica y ajusta:
+
+```
+# CANAL ACTUAL
+{{ $json.source === 'twilio' ? 
+  'LLAMADA TELEFÓNICA - Sé breve y claro.' : 
+  'CHAT WEB - Puedes ser más detallado.' 
+}}
+```
+
+## Importar el Workflow Integrado
+
+1. En n8n, ir a **Workflows** → **Import from File**
+2. Seleccionar `workflows/Asistente_Reservas_Twilio_Integrado.json`
+3. Configurar credenciales:
+   - **OpenRouter** (o OpenAI)
+   - **Supabase**
+   - **Telegram** (opcional)
+4. En Twilio Console, configurar webhook a `/webhook/twilio-restaurante`
 5. Activar el workflow
