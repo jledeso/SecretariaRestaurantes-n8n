@@ -346,24 +346,26 @@ INSERT INTO mesas (id, zona, area, numero, capacidad, caracteristicas) VALUES
 
 ---
 
-## 3. Crear Data Tables en n8n
+## 3. Tablas de Configuración en Supabase
 
-Los **Data Tables** de n8n permiten almacenar configuración del restaurante sin usar variables externas.
+La configuración del restaurante se almacena en **Supabase** para que el AI Agent pueda acceder a ella mediante herramientas (Tools).
 
-### 3.1 Data Table: `config_restaurante`
+### 3.1 Tabla: `config_restaurante`
 
-En n8n: **Projects** → **Data Tables** → **+ New Data Table**
+Almacena la configuración general en formato clave-valor.
 
-**Nombre**: `config_restaurante`
+```sql
+CREATE TABLE config_restaurante (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  clave TEXT UNIQUE NOT NULL,
+  valor TEXT NOT NULL,
+  descripcion TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
-**Columnas**:
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| clave | Text | Identificador único |
-| valor | Text | Valor de configuración |
-| descripcion | Text | Descripción del campo |
-
-**Datos a insertar**:
+**Datos**:
 
 | clave | valor | descripcion |
 |-------|-------|-------------|
@@ -384,16 +386,19 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 | duracion_reserva | 120 | Minutos por reserva |
 | telegram_chat_id | -1001234567890 | Chat ID notificaciones |
 
-### 3.2 Data Table: `zonas_restaurante`
+### 3.2 Tabla: `zonas_restaurante`
 
-**Nombre**: `zonas_restaurante`
+Zonas disponibles para reservas.
 
-**Columnas**:
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| zona | Text | Nombre de la zona |
-| descripcion | Text | Descripción para clientes |
-| disponible | Boolean | Si acepta reservas |
+```sql
+CREATE TABLE zonas_restaurante (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  zona TEXT UNIQUE NOT NULL,
+  descripcion TEXT,
+  disponible BOOLEAN DEFAULT true,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
 **Datos**:
 
@@ -405,15 +410,19 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 | Salón Privado | Espacio exclusivo para eventos (8-20 personas) | true |
 | Terraza Superior | Las mejores vistas panorámicas | true |
 
-### 3.3 Data Table: `info_restaurante`
+### 3.3 Tabla: `info_restaurante`
 
-**Nombre**: `info_restaurante`
+Información general del restaurante por categorías.
 
-**Columnas**:
-| Columna | Tipo | Descripción |
-|---------|------|-------------|
-| categoria | Text | Tipo de información |
-| contenido | Text | Texto completo |
+```sql
+CREATE TABLE info_restaurante (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  categoria TEXT UNIQUE NOT NULL,
+  contenido TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
 
 **Datos**:
 
@@ -427,6 +436,51 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 | mascotas | Mascotas permitidas en terraza exterior |
 | eventos | Eventos privados en Salón Privado (hasta 20 personas). Solicitar presupuesto. |
 
+### 3.4 Función: `obtener_configuracion_completa()`
+
+Función que devuelve toda la configuración en un solo JSON para el AI Agent.
+
+```sql
+CREATE OR REPLACE FUNCTION obtener_configuracion_completa()
+RETURNS JSON AS $$
+DECLARE
+  config_json JSON;
+  zonas_json JSON;
+  info_json JSON;
+  resultado JSON;
+BEGIN
+  -- Configuración como objeto clave-valor
+  SELECT json_object_agg(clave, valor)
+  INTO config_json
+  FROM config_restaurante;
+  
+  -- Zonas como array
+  SELECT json_agg(json_build_object(
+    'zona', zona,
+    'descripcion', descripcion,
+    'disponible', disponible
+  ))
+  INTO zonas_json
+  FROM zonas_restaurante
+  WHERE disponible = true;
+  
+  -- Info como objeto categoria-contenido
+  SELECT json_object_agg(categoria, contenido)
+  INTO info_json
+  FROM info_restaurante;
+  
+  -- Combinar todo
+  resultado := json_build_object(
+    'config', config_json,
+    'zonas', zonas_json,
+    'info', info_json
+  );
+  
+  RETURN resultado;
+END;
+$$ LANGUAGE plpgsql;
+```
+
 ---
 
 ## 4. Workflow Principal: AI Agent
@@ -435,12 +489,6 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 
 ```
 [Chat Trigger / Webhook]
-        │
-        ▼
-[Obtener Configuración] ─── Data Table: config_restaurante
-        │
-        ▼
-[Set: Preparar Contexto]
         │
         ▼
 ┌───────┴───────┐
@@ -454,10 +502,12 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 │  │ Memory  │  │
 │  └─────────┘  │
 │  ┌─────────┐  │
-│  │  Tools  │◄─┼── Supabase Tool (Disponibilidad)
-│  │         │◄─┼── Supabase Tool (Crear Reserva)
-│  │         │◄─┼── Supabase Tool (Sillas)
-│  │         │◄─┼── Telegram Tool (Notificar)
+│  │  Tools  │◄─┼── Supabase: Obtener Configuración
+│  │         │◄─┼── Supabase: Verificar Disponibilidad
+│  │         │◄─┼── Supabase: Crear Reserva
+│  │         │◄─┼── Supabase: Consultar Sillas
+│  │         │◄─┼── Supabase: Buscar/Cancelar Reserva
+│  │         │◄─┼── Telegram: Notificar Personal
 │  └─────────┘  │
 └───────┬───────┘
         │
@@ -469,6 +519,8 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 
 **Tipo**: `@n8n/n8n-nodes-langchain.chatTrigger`
 **Versión**: 1.4
+
+Recibe los mensajes del usuario y los envía directamente al AI Agent.
 
 ```json
 {
@@ -492,76 +544,7 @@ En n8n: **Projects** → **Data Tables** → **+ New Data Table**
 }
 ```
 
-### 4.3 Nodo: Obtener Configuración
-
-**Tipo**: `n8n-nodes-base.dataTable`
-
-```json
-{
-  "parameters": {
-    "operation": "get",
-    "dataTableId": {
-      "mode": "list",
-      "value": "config_restaurante"
-    },
-    "returnAll": true
-  },
-  "type": "n8n-nodes-base.dataTable",
-  "typeVersion": 1,
-  "position": [450, 300],
-  "id": "get-config-1",
-  "name": "Obtener Config"
-}
-```
-
-### 4.4 Nodo: Set - Preparar Contexto
-
-**Tipo**: `n8n-nodes-base.set`
-
-Este nodo transforma los datos del Data Table en variables accesibles:
-
-```json
-{
-  "parameters": {
-    "mode": "manual",
-    "duplicateItem": false,
-    "assignments": {
-      "assignments": [
-        {
-          "name": "chatInput",
-          "value": "={{ $('Chat Trigger').item.json.chatInput }}",
-          "type": "string"
-        },
-        {
-          "name": "sessionId",
-          "value": "={{ $('Chat Trigger').item.json.sessionId }}",
-          "type": "string"
-        },
-        {
-          "name": "config",
-          "value": "={{ Object.fromEntries($json.map(row => [row.clave, row.valor])) }}",
-          "type": "object"
-        },
-        {
-          "name": "fecha_actual",
-          "value": "={{ $now.format('yyyy-MM-dd') }}",
-          "type": "string"
-        },
-        {
-          "name": "hora_actual",
-          "value": "={{ $now.format('HH:mm') }}",
-          "type": "string"
-        }
-      ]
-    }
-  },
-  "type": "n8n-nodes-base.set",
-  "typeVersion": 3.4,
-  "position": [650, 300],
-  "id": "set-context-1",
-  "name": "Preparar Contexto"
-}
-```
+> **Nota**: El Chat Trigger conecta **directamente** al AI Agent. La configuración del restaurante se obtiene mediante Tools de Supabase cuando el agente la necesita.
 
 ### 4.5 Nodo: AI Agent
 

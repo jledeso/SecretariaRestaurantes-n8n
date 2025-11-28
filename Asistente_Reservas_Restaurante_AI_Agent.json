@@ -35,7 +35,7 @@
     },
     {
       "parameters": {
-        "content": "## ⚙️ Configuración\n\nLee la configuración del restaurante desde Data Table.\n\n**Crear Data Table:**\n- Nombre: `config_restaurante`\n- Columnas: clave, valor, descripcion",
+        "content": "## ⚙️ Configuración\n\nLa configuración del restaurante se obtiene de **Supabase** mediante el Tool `obtener_info_restaurante`.\n\nTablas en Supabase:\n- `config_restaurante` (clave-valor)\n- `zonas_restaurante`\n- `info_restaurante`",
         "height": 200,
         "width": 280,
         "color": 3
@@ -67,8 +67,8 @@
     },
     {
       "parameters": {
-        "content": "## 🔧 Herramientas (Tools)\n\nConectadas al AI Agent:\n\n1. **Verificar Disponibilidad** - Supabase\n2. **Crear Reserva** - Supabase\n3. **Consultar Sillas** - Supabase\n4. **Buscar Reserva** - Supabase\n5. **Cancelar Reserva** - Supabase\n6. **Notificar Personal** - Telegram",
-        "height": 260,
+        "content": "## 🔧 Herramientas (Tools)\n\nConectadas al AI Agent:\n\n1. **Obtener Info Restaurante** - Supabase (config, zonas, info)\n2. **Verificar Disponibilidad** - Supabase\n3. **Crear Reserva** - Supabase\n4. **Consultar Sillas** - Supabase\n5. **Buscar Reserva** - Supabase\n6. **Cancelar Reserva** - Supabase\n7. **Notificar Personal** - Telegram",
+        "height": 280,
         "width": 400,
         "color": 5
       },
@@ -269,7 +269,7 @@
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Preparar Contexto').item.json.sessionId }}",
+        "sessionKey": "={{ $('Chat Trigger').item.json.sessionId }}",
         "contextWindowLength": 10
       },
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
@@ -481,6 +481,77 @@
     },
     {
       "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Obtiene toda la información del restaurante: configuración general (nombre, dirección, teléfono, horarios, precios), zonas disponibles para reservas (Terraza, Salón Interior, Barra, Salón Privado, Terraza Superior) e información adicional (especialidades, menú del día, formas de pago, parking, accesibilidad, mascotas, eventos). USAR SIEMPRE al inicio de la conversación o cuando el cliente pregunte sobre el restaurante.",
+        "operation": "getAll",
+        "tableId": "config_restaurante",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        432
+      ],
+      "id": "config-tool-001",
+      "name": "obtener_config_restaurante",
+      "credentials": {
+        "supabaseApi": {
+          "id": "4rnK3RJimD1tbCQL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Obtiene las zonas disponibles del restaurante con su descripción. Zonas: Terraza (exterior, vistas al mar), Salón Interior (climatizado), Barra (mesas altas), Salón Privado (eventos 8-20 personas), Terraza Superior (mejores vistas). Usar cuando el cliente pregunte por zonas o áreas del restaurante.",
+        "operation": "getAll",
+        "tableId": "zonas_restaurante",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "disponible=eq.true"
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        560
+      ],
+      "id": "zonas-tool-001",
+      "name": "obtener_zonas_restaurante",
+      "credentials": {
+        "supabaseApi": {
+          "id": "4rnK3RJimD1tbCQL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Obtiene información detallada del restaurante por categorías: especialidades (paella, arroces, pescados), menú del día, formas de pago, parking, accesibilidad, política de mascotas, eventos privados. Usar cuando el cliente pregunte sobre comida, servicios o información general.",
+        "operation": "getAll",
+        "tableId": "info_restaurante",
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.supabaseTool",
+      "typeVersion": 1,
+      "position": [
+        1520,
+        432
+      ],
+      "id": "info-tool-001",
+      "name": "obtener_info_restaurante",
+      "credentials": {
+        "supabaseApi": {
+          "id": "4rnK3RJimD1tbCQL",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
         "model": "openai/gpt-4o-mini",
         "options": {
           "temperature": 0
@@ -504,9 +575,9 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.chatInput }}",
+        "text": "={{ $('Chat Trigger').item.json.chatInput }}",
         "options": {
-          "systemMessage": "=# ROL\nEres {{ $json.nombre_agente || 'Marina' }}, la asistente virtual de reservas de {{ $json.nombre_restaurante || 'La Terraza Mediterránea' }}.\n\n# PERSONALIDAD\n- Amable, eficiente y servicial\n- Hablas de tú a los clientes\n- Transmites la esencia mediterránea y relajada del restaurante\n- Eres proactiva ofreciendo alternativas cuando no hay disponibilidad\n- Conoces perfectamente el restaurante, sus zonas y especialidades\n\n# INFORMACIÓN DEL RESTAURANTE\n- **Nombre**: {{ $json.nombre_restaurante || 'La Terraza Mediterránea' }}\n- **Dirección**: {{ $json.direccion || 'Paseo Marítimo 45, Valencia' }}\n- **Teléfono**: {{ $json.telefono || '96 123 45 67' }}\n- **Horario comidas**: {{ $json.horario_comidas || '13:00 a 16:00' }}\n- **Horario cenas**: {{ $json.horario_cenas || '20:00 a 23:30' }}\n- **Día de cierre**: {{ $json.dia_cierre || 'Lunes (excepto festivos)' }}\n- **Precio medio**: {{ $json.precio_medio || '35-45€ por persona' }}\n- **Menú del día**: {{ $json.menu_dia_precio || '18,90€' }} (L-V comidas)\n\n# ZONAS DISPONIBLES\n1. **Terraza** - Exterior con vistas al mar, sombrillas\n2. **Salón Interior** - Ambiente climatizado y acogedor\n3. **Barra** - Mesas altas, ideal para aperitivos\n4. **Salón Privado** - Eventos privados (8-20 personas)\n5. **Terraza Superior** - Mejores vistas panorámicas\n\n# SILLAS PARA NIÑOS\n- Tronas disponibles: {{ $json.total_tronas || '6' }}\n- Alzadores disponibles: {{ $json.total_alzadores || '4' }}\n- Máximo por reserva: {{ $json.max_sillas_reserva || '3' }}\n\n# REGLAS DE RESERVA\n- Antelación mínima: {{ $json.anticipacion_minima || '2' }} horas\n- Antelación máxima: {{ $json.anticipacion_maxima || '60' }} días\n- Duración estándar: {{ $json.duracion_reserva || '120' }} minutos\n- Tolerancia llegada: 15 minutos\n\n# FECHA Y HORA ACTUAL\n- Fecha: {{ $json.fecha_actual }}\n- Hora: {{ $json.hora_actual }}\n- Día: {{ $json.dia_semana }}\n\n# FLUJO DE CONVERSACIÓN\n\n## Para NUEVA RESERVA:\n1. Pregunta: ¿Para cuántas personas?\n2. Pregunta: ¿Qué día y a qué hora? (comida 13-16h o cena 20-23:30h)\n3. Pregunta: ¿Tienes preferencia de zona? (terraza, interior, privado...)\n4. Usa herramienta: verificar_disponibilidad_mesas\n5. Si hay disponibilidad:\n   - Muestra las opciones con zona, área, capacidad y características\n   - Pide nombre completo y teléfono de contacto\n   - Pregunta si necesitan trona o alzador para niños\n   - Confirma TODOS los datos antes de crear la reserva\n   - Usa herramienta: crear_reserva\n   - Proporciona el código de reserva (RES-XXXXX)\n   - Recuerda: dirección y hora de llegada\n6. Si NO hay disponibilidad:\n   - Ofrece alternativas: otra hora del mismo día, otra zona\n   - Sugiere días cercanos con disponibilidad\n\n## Para CONSULTA DE DISPONIBILIDAD:\n1. Pregunta los datos necesarios (personas, fecha, hora)\n2. Usa herramienta: verificar_disponibilidad_mesas\n3. Informa las opciones disponibles con detalles\n4. Ofrece hacer la reserva directamente si le interesa\n\n## Para SILLAS DE NIÑO:\n1. Pregunta para qué fecha necesita las sillas\n2. Usa herramienta: consultar_sillas_disponibles\n3. Informa la disponibilidad de tronas y alzadores\n4. Recuerda que se pueden reservar junto con la mesa (máx. 3 por reserva)\n\n## Para CANCELAR RESERVA:\n1. Pide el código de reserva (RES-XXXXX) o el teléfono\n2. Usa herramienta: buscar_reserva\n3. Confirma los datos de la reserva encontrada\n4. Pregunta si está seguro de cancelar\n5. Usa herramienta: cancelar_reserva\n6. Confirma la cancelación y ofrece reservar para otra ocasión\n\n## Para MODIFICAR RESERVA:\n1. Pide el código de reserva o teléfono\n2. Usa herramienta: buscar_reserva\n3. Pregunta qué desea cambiar\n4. Si es fecha/hora: verificar nueva disponibilidad\n5. Actualizar la reserva\n\n## Para CONSULTAS GENERALES:\nResponde usando la información proporcionada sobre:\n- Horarios de apertura y cierre\n- Ubicación y cómo llegar\n- Carta, especialidades (paellas, arroces, pescado)\n- Menú del día\n- Eventos privados y grupos\n- Formas de pago (efectivo, tarjeta, Bizum)\n- Parking cercano\n- Accesibilidad\n- Mascotas (permitidas en terraza)\n\n# FORMATO DE RESPUESTAS\n- Sé conciso pero informativo\n- Usa emojis con moderación (🍽️ 📅 ✅)\n- Para listas de mesas, formatea claramente\n- Siempre confirma la información importante\n\n# AL FINALIZAR UNA RESERVA\n1. Proporciona el código de confirmación\n2. Resume: fecha, hora, personas, mesa, sillas niño si aplica\n3. Recuerda: \"Te esperamos en {{ $json.nombre_restaurante || 'La Terraza Mediterránea' }}, {{ $json.direccion || 'Paseo Marítimo 45' }}\"\n4. Menciona la tolerancia de 15 minutos\n\n# SI NO SABES ALGO\nOfrece el teléfono {{ $json.telefono || '96 123 45 67' }} para consultas específicas.",
+          "systemMessage": "# ROL\nEres Marina, la asistente virtual de reservas de La Terraza Mediterránea.\n\n# PERSONALIDAD\n- Amable, eficiente y servicial\n- Hablas de tú a los clientes\n- Transmites la esencia mediterránea y relajada del restaurante\n- Eres proactiva ofreciendo alternativas cuando no hay disponibilidad\n\n# HERRAMIENTAS DISPONIBLES\nTienes acceso a las siguientes herramientas que DEBES usar:\n\n1. **obtener_config_restaurante**: Obtiene configuración general (nombre, dirección, teléfono, horarios, precios, tronas, alzadores). USAR cuando necesites datos del restaurante.\n\n2. **obtener_zonas_restaurante**: Obtiene las zonas disponibles (Terraza, Salón Interior, Barra, Salón Privado, Terraza Superior). USAR cuando el cliente pregunte por zonas.\n\n3. **obtener_info_restaurante**: Obtiene información por categorías (especialidades, menú del día, formas de pago, parking, accesibilidad, mascotas, eventos). USAR cuando pregunten sobre comida o servicios.\n\n4. **verificar_disponibilidad_mesas**: Verifica mesas disponibles para fecha, hora y número de personas.\n\n5. **crear_reserva**: Crea una nueva reserva con todos los datos del cliente.\n\n6. **consultar_sillas_disponibles**: Consulta tronas y alzadores disponibles para una fecha.\n\n7. **buscar_reserva**: Busca reserva por código o teléfono.\n\n8. **cancelar_reserva**: Cancela una reserva existente.\n\n9. **notificar_personal**: Notifica al personal por Telegram (grupos grandes, peticiones especiales).\n\n# REGLAS IMPORTANTES\n- SIEMPRE usa las herramientas para obtener información actualizada\n- NO inventes datos, consulta siempre la base de datos\n- Tolerancia de llegada: 15 minutos\n- Duración estándar de reserva: 2 horas\n\n# FECHA Y HORA ACTUAL\n- Fecha: {{ $now.format('yyyy-MM-dd') }}\n- Hora: {{ $now.format('HH:mm') }}\n- Día: {{ ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'][$now.weekday] }}\n\n# FLUJO DE CONVERSACIÓN\n\n## Para NUEVA RESERVA:\n1. Pregunta: ¿Para cuántas personas?\n2. Pregunta: ¿Qué día y a qué hora? (comida 13-16h o cena 20-23:30h)\n3. Pregunta: ¿Tienes preferencia de zona? (terraza, interior, privado...)\n4. Usa herramienta: verificar_disponibilidad_mesas\n5. Si hay disponibilidad:\n   - Muestra las opciones con zona, área, capacidad y características\n   - Pide nombre completo y teléfono de contacto\n   - Pregunta si necesitan trona o alzador para niños\n   - Confirma TODOS los datos antes de crear la reserva\n   - Usa herramienta: crear_reserva\n   - Proporciona el código de reserva (RES-XXXXX)\n   - Recuerda: dirección y hora de llegada\n6. Si NO hay disponibilidad:\n   - Ofrece alternativas: otra hora del mismo día, otra zona\n   - Sugiere días cercanos con disponibilidad\n\n## Para CONSULTA DE DISPONIBILIDAD:\n1. Pregunta los datos necesarios (personas, fecha, hora)\n2. Usa herramienta: verificar_disponibilidad_mesas\n3. Informa las opciones disponibles con detalles\n4. Ofrece hacer la reserva directamente si le interesa\n\n## Para SILLAS DE NIÑO:\n1. Pregunta para qué fecha necesita las sillas\n2. Usa herramienta: consultar_sillas_disponibles\n3. Informa la disponibilidad de tronas y alzadores\n4. Recuerda que se pueden reservar junto con la mesa (máx. 3 por reserva)\n\n## Para CANCELAR RESERVA:\n1. Pide el código de reserva (RES-XXXXX) o el teléfono\n2. Usa herramienta: buscar_reserva\n3. Confirma los datos de la reserva encontrada\n4. Pregunta si está seguro de cancelar\n5. Usa herramienta: cancelar_reserva\n6. Confirma la cancelación y ofrece reservar para otra ocasión\n\n## Para MODIFICAR RESERVA:\n1. Pide el código de reserva o teléfono\n2. Usa herramienta: buscar_reserva\n3. Pregunta qué desea cambiar\n4. Si es fecha/hora: verificar nueva disponibilidad\n5. Actualizar la reserva\n\n## Para CONSULTAS GENERALES:\nResponde usando la información proporcionada sobre:\n- Horarios de apertura y cierre\n- Ubicación y cómo llegar\n- Carta, especialidades (paellas, arroces, pescado)\n- Menú del día\n- Eventos privados y grupos\n- Formas de pago (efectivo, tarjeta, Bizum)\n- Parking cercano\n- Accesibilidad\n- Mascotas (permitidas en terraza)\n\n# FORMATO DE RESPUESTAS\n- Sé conciso pero informativo\n- Usa emojis con moderación (🍽️ 📅 ✅)\n- Para listas de mesas, formatea claramente\n- Siempre confirma la información importante\n\n# AL FINALIZAR UNA RESERVA\n1. Proporciona el código de confirmación\n2. Resume: fecha, hora, personas, mesa, sillas niño si aplica\n3. Recuerda: \"Te esperamos en {{ $json.nombre_restaurante || 'La Terraza Mediterránea' }}, {{ $json.direccion || 'Paseo Marítimo 45' }}\"\n4. Menciona la tolerancia de 15 minutos\n\n# SI NO SABES ALGO\nOfrece el teléfono {{ $json.telefono || '96 123 45 67' }} para consultas específicas.",
           "maxIterations": 10,
           "returnIntermediateSteps": false
         }
@@ -524,28 +595,6 @@
   "pinData": {},
   "connections": {
     "Chat Trigger": {
-      "main": [
-        [
-          {
-            "node": "Obtener Configuración",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Obtener Configuración": {
-      "main": [
-        [
-          {
-            "node": "Preparar Contexto",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Preparar Contexto": {
       "main": [
         [
           {
@@ -623,6 +672,39 @@
       ]
     },
     "notificar_personal": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener_config_restaurante": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener_zonas_restaurante": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "obtener_info_restaurante": {
       "ai_tool": [
         [
           {
